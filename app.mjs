@@ -80,7 +80,21 @@ async function main() {
         }
     });
 
-    // Middleware pour protection des routes
+    // Route Get Post by User
+    app.get("/user/:userId/posts", async (req, res) => {
+        try {
+            const userId = req.params.userId;
+            const posts = await Post.findAll({ where: { id: userId } })
+
+            res.json(posts);
+
+        } catch (error) {
+            console.log(error);
+            res.status(500).json("Erreur serveur");
+        }
+    });
+
+    // << !! Middleware pour protection des routes !! >>
     app.use(isLoggedInJWT(User));
 
     // Route Add-Post
@@ -120,6 +134,34 @@ async function main() {
     app.delete("/post/:postId", async (req, res) => {
         const postId = req.params.postId;
         const userId = req.user.id;
+        const userRole = req.user.role;
+
+        try {
+            const post = await Post.findOne({ where: { id: postId } });
+
+            if (!post) {
+                return res.status(404).json({ message: "Post non trouvé" });
+            }
+
+            if (post.UserId !== userId && userRole !== "admin") {
+                return res.status(403).json({ message: "Vous n'avez pas l'authorisation pour supprimer ce post" });
+            }
+
+            await Post.destroy({ where: { id: postId } });
+            res.json({ message: "Suppression du post réussie" });
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: "Erreur lors de la suppression du post" });
+        }
+    });
+
+    // Route Delete-Comment -------------------------------------------
+    app.delete("/comment/:commentId", async (req, res) => {
+        const postId = req.params.postId;
+        const userId = req.user.id;
+        const userRole = req.user.role;
+
         try {
             const post = await Post.findOne({ where: { id: postId } });
 
@@ -141,7 +183,7 @@ async function main() {
     });
 
     // Route LOGOUT
-    app.get('/logout', (req, res) => {
+    app.post('/logout', (req, res) => {
         res.clearCookie('token');
         res.json({ message: 'Logout successful' });
     });

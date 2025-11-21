@@ -84,7 +84,7 @@ async function main() {
     app.get("/user/:userId/posts", async (req, res) => {
         try {
             const userId = req.params.userId;
-            const posts = await Post.findAll({ where: { id: userId } })
+            const posts = await Post.findAll({ where: { UserId: userId } })
 
             res.json(posts);
 
@@ -156,29 +156,29 @@ async function main() {
         }
     });
 
-    // Route Delete-Comment -------------------------------------------
+    // Route Delete-Comment
     app.delete("/comment/:commentId", async (req, res) => {
-        const postId = req.params.postId;
+        const commentId = req.params.commentId;
         const userId = req.user.id;
         const userRole = req.user.role;
 
         try {
-            const post = await Post.findOne({ where: { id: postId } });
+            const comment = await Post.findOne({ where: { id: commentId } });
 
-            if (!post) {
-                return res.status(404).json({ message: "Post non trouvé" });
+            if (!comment) {
+                return res.status(404).json({ message: "Commentaire non trouvé" });
             }
 
-            if (post.UserId !== userId && userRole !== "admin") {
-                return res.status(403).json({ message: "Vous n'avez pas l'authorisation pour supprimer ce post" });
+            if (comment.UserId !== userId && userRole !== "admin") {
+                return res.status(403).json({ message: "Vous n'avez pas l'authorisation pour supprimer ce commentaire" });
             }
 
-            await Post.destroy({ where: { id: postId } });
-            res.json({ message: "Suppression du post réussie" });
+            await Comment.destroy({ where: { id: commentId } });
+            res.json({ message: "Suppression du commentaire réussie" });
 
         } catch (error) {
             console.error(error);
-            res.status(500).json({ error: "Erreur lors de la suppression du post" });
+            res.status(500).json({ error: "Erreur lors de la suppression du commentaire" });
         }
     });
 

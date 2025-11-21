@@ -67,14 +67,13 @@ async function main() {
     });
 
     // Route GET ALL Posts and Comments
-
     app.get("/all", async (req, res) => {
         try {
             const posts = await Post.findAll();
             const comments = await Comment.findAll();
 
             res.json({ posts, comments });
-            
+
         } catch (error) {
             console.log(error);
             res.status(500).json("Erreur serveur");
@@ -97,6 +96,47 @@ async function main() {
             res.json(newPost);
         } catch (error) {
             res.status(500).json({ error: "Erreur lors de la création du Post" });
+        }
+    });
+
+    // Route Add-Comment
+    app.post("/post/:postId/comments", async (req, res) => {
+        const newCommentData = req.body;
+        const postId = req.params.postId;
+
+        try {
+            const newComment = await Comment.create({
+                content: newCommentData.content,
+                UserId: req.user.id,
+                PostId: postId
+            });
+            res.json(newComment);
+        } catch (error) {
+            res.status(500).json({ error: "Erreur lors de la création du commentaire" });
+        }
+    });
+
+    // Route Delete-Post
+    app.delete("/post/:postId", async (req, res) => {
+        const postId = req.params.postId;
+        const userId = req.user.id;
+        try {
+            const post = await Post.findOne({ where: { id: postId } });
+
+            if (!post) {
+                return res.status(404).json({ message: "Post non trouvé" });
+            }
+
+            if (post.UserId !== userId && userRole !== "admin") {
+                return res.status(403).json({ message: "Vous n'avez pas l'authorisation pour supprimer ce post" });
+            }
+
+            await Post.destroy({ where: { id: postId } });
+            res.json({ message: "Suppression du post réussie" });
+
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ error: "Erreur lors de la suppression du post" });
         }
     });
 

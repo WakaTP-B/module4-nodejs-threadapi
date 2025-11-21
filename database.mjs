@@ -34,12 +34,18 @@ export async function loadSequelize() {
                     const hashedPassword = bcrypt.hashSync(clearPassword, 10);
                     this.setDataValue('password', hashedPassword);
                 }
+            },
+            role: {
+                type: DataTypes.ENUM("user", "admin"),
+                defaultValue: "user"
             }
         });
+
         const Post = sequelize.define("Post", {
             title: DataTypes.STRING,
             content: DataTypes.STRING
         });
+
         const Comment = sequelize.define("Comment", {
             content: DataTypes.STRING
         });
